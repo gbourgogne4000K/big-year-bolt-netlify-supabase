@@ -1,9 +1,9 @@
 'use client';
-import { SessionProvider } from "next-auth/react";
 import React from "react";
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  return <SessionProvider>{children}</SessionProvider>;
+  // Supabase auth doesn't require a provider wrapper - auth state is managed per-component
+  return <>{children}</>;
 }
 
 

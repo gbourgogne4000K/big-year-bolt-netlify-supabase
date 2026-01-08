@@ -1,5 +1,5 @@
 "use client";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 import { useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -77,7 +77,7 @@ type FamilyCalendar = {
 };
 
 export default function HomePage() {
-  const { data: session, status } = useSession();
+  const { user, status, signInWithGoogle, signOut } = useSupabaseAuth();
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [events, setEvents] = useState<AllDayEvent[]>([]);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
@@ -1368,7 +1368,7 @@ export default function HomePage() {
                           className="w-full justify-start gap-2 text-destructive hover:text-destructive"
                           onClick={() => {
                             const myMember = selectedFamilyForManage.members.find(
-                              (m) => m.userId === (session as any)?.user?.id
+                              (m) => m.userId === user?.id
                             );
                             if (myMember && confirm(`Leave "${selectedFamilyForManage.name}"?`)) {
                               leaveFamily(selectedFamilyForManage.id, myMember.id);
@@ -1724,14 +1724,12 @@ export default function HomePage() {
                               JSON.stringify(existing)
                             );
                           } catch {}
-                          import("next-auth/react").then(({ signIn }) => {
-                            const href = window.location.href;
-                            const hasQuery = href.includes("?");
-                            const callbackUrl = `${href}${
-                              hasQuery ? "&" : "?"
-                            }linkingAccount=1`;
-                            signIn("google", { callbackUrl });
-                          });
+                          const href = window.location.href;
+                          const hasQuery = href.includes("?");
+                          const callbackUrl = `${href}${
+                            hasQuery ? "&" : "?"
+                          }linkingAccount=1`;
+                          signInWithGoogle({ callbackUrl });
                         }}
                       >
                         <Plus className="h-4 w-4" />
@@ -1782,7 +1780,7 @@ export default function HomePage() {
                   className="w-full justify-center"
                   onClick={() => {
                     setSidebarOpen(false);
-                    signIn("google");
+                    signInWithGoogle();
                   }}
                 >
                   Sign in with Google

@@ -1,6 +1,6 @@
 # Big Year
 
-Full-screen yearly calendar that shows only all-day events from your Google Calendar. Built with Next.js (App Router), Tailwind CSS, and shadcn-style UI components.
+Full-screen yearly calendar that shows only all-day events from your Google Calendar. Built with Next.js (App Router), Tailwind CSS, Supabase (Auth & Database), and shadcn-style UI components.
 
 ## Features
 
@@ -35,26 +35,53 @@ Share calendars with your family and see everyone's events in a unified view:
 npm install
 ```
 
-2. Create `.env` in the project root with:
+2. Create a Supabase project at [supabase.com](https://supabase.com) and note your:
+   - Project URL
+   - Anon (public) key
+   - Database connection string (Settings → Database → Connection string → URI)
+
+3. Create `.env` in the project root with:
 
 ```
-DATABASE_URL=your-postgresql-database-url
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=replace-with-a-strong-random-string
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
+# Database (Supabase PostgreSQL)
+DATABASE_URL=postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
+
+# Google OAuth (for Calendar API access)
 GOOGLE_CLIENT_ID=your-google-oauth-client-id
 GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
 ```
 
-For local development, you can use a local PostgreSQL database or a free hosted option like [Neon](https://neon.tech) or [Supabase](https://supabase.com).
+4. Configure Supabase Authentication:
 
-3. Configure your Google OAuth app:
+   In your Supabase dashboard (Authentication → Providers → Google):
+   - Enable Google provider
+   - Add your Google Client ID and Secret
+   - Note the callback URL: `https://your-project.supabase.co/auth/v1/callback`
+
+5. Configure your Google OAuth app in [Google Cloud Console](https://console.cloud.google.com/apis/credentials):
 
    - App type: Web application
-   - Authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
-   - Scopes: `openid email profile https://www.googleapis.com/auth/calendar.readonly`
+   - Authorized redirect URIs:
+     - `https://your-project.supabase.co/auth/v1/callback` (Supabase callback)
+     - `http://localhost:3000/auth/callback` (local development)
+   - Scopes:
+     - `openid`
+     - `email`
+     - `profile`
+     - `https://www.googleapis.com/auth/calendar.readonly`
+     - `https://www.googleapis.com/auth/calendar.events`
 
-4. Run the dev server:
+6. Initialize the database:
+
+```bash
+npx prisma db push
+```
+
+7. Run the dev server:
 
 ```bash
 npm run dev
@@ -62,36 +89,42 @@ npm run dev
 
 Open `http://localhost:3000`, sign in with Google, and you'll see your all-day events plotted across the full-year view. Use the arrows or Today button to navigate the year.
 
-## Production Setup (Vercel)
+## Production Setup (Netlify/Vercel)
 
-When deploying to Vercel, you need to configure both your Vercel environment variables and your Google OAuth credentials:
+When deploying to production, you need to configure your environment variables and Supabase project:
 
-### 1. Set Vercel Environment Variables
+### 1. Set Environment Variables
 
-In your Vercel project dashboard, go to **Settings** → **Environment Variables** and ensure you have:
+In your deployment platform (Netlify/Vercel), add these environment variables:
 
-- `NEXTAUTH_URL` = `https://bigyear.app` (or your custom domain)
-- `NEXTAUTH_SECRET` = a strong random string (generate with `openssl rand -base64 32`)
+- `NEXT_PUBLIC_SUPABASE_URL` = your Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` = your Supabase anon/public key
+- `DATABASE_URL` = your Supabase PostgreSQL connection string
 - `GOOGLE_CLIENT_ID` = your Google OAuth client ID
 - `GOOGLE_CLIENT_SECRET` = your Google OAuth client secret
-- `DATABASE_URL` = your PostgreSQL connection string (see `VERCEL_SETUP.md`)
 
-**Important**: Make sure `NEXTAUTH_URL` matches your actual Vercel deployment URL exactly (including `https://`).
+### 2. Configure Supabase for Production
 
-### 2. Configure Google OAuth for Production
+In your Supabase dashboard:
+
+1. Go to **Authentication** → **URL Configuration**
+2. Set **Site URL** to your production URL (e.g., `https://bigyear.app`)
+3. Add your production callback URL to **Redirect URLs**:
+   - `https://bigyear.app/auth/callback`
+
+### 3. Configure Google OAuth for Production
 
 In your [Google Cloud Console](https://console.cloud.google.com/apis/credentials):
 
 1. Go to your OAuth 2.0 Client ID
 2. Under **Authorized redirect URIs**, add:
-   - `https://bigyear.app/api/auth/callback/google` (or your custom domain)
+   - `https://your-project.supabase.co/auth/v1/callback` (Supabase production callback)
+   - `https://bigyear.app/auth/callback` (your app's callback)
 3. Save the changes
 
-**Note**: You can have multiple redirect URIs - one for local development (`http://localhost:3000/api/auth/callback/google`) and one for production.
+### 4. Deploy
 
-### 3. Redeploy
-
-After updating the environment variables and Google OAuth settings, trigger a new deployment in Vercel (or push a commit) to apply the changes.
+After updating environment variables and OAuth settings, deploy your application. The database schema will be managed by Prisma.
 
 ## Fixing "Esta aplicación está bloqueada" / "This application is blocked" Error
 
@@ -441,8 +474,18 @@ After making these changes:
 
 **Important**: The "Send token securely" and "WebViews usage" alerts showing green checkmarks indicate those security measures are already correctly configured.
 
+## Architecture
+
+This app uses:
+
+- **Next.js 14** with App Router for the frontend and API routes
+- **Supabase** for authentication (Google OAuth) and PostgreSQL database
+- **Prisma** for database schema management and queries
+- **Google Calendar API** for fetching and managing calendar events
+
 ## Notes
 
 - Only all-day events are fetched: events with `start.date` (not `start.dateTime`) are included.
+- Google OAuth tokens are stored in the database for Calendar API access.
 - Access tokens are automatically refreshed using the Google refresh token.
 - The calendar auto-fills the entire viewport (full width and height).

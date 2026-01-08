@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { mergeAccountsFromDbAndSession, refreshGoogleAccessToken, fetchWithAutoRefresh } from "@/lib/google-accounts";
+import { getAuthUserId } from "@/lib/supabase/auth";
+import { getGoogleAccountsForUser, refreshGoogleAccessToken, fetchWithAutoRefresh } from "@/lib/google-accounts";
 
 export const dynamic = "force-dynamic";
 
@@ -38,15 +37,12 @@ export async function GET(req: Request) {
     .map((s) => s.trim())
     .filter(Boolean);
 
-  const session = await getServerSession(authOptions);
-  if (!(session as any)?.user?.id) {
+  const userId = await getAuthUserId();
+  if (!userId) {
     return NextResponse.json({ events: [] }, { status: 200 });
   }
 
-  let accounts = await mergeAccountsFromDbAndSession(
-    (session as any).user.id as string,
-    session as any
-  );
+  let accounts = await getGoogleAccountsForUser(userId);
   if (accounts.length === 0) {
     return NextResponse.json({ events: [] }, { status: 200 });
   }
@@ -127,8 +123,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!(session as any)?.user?.id) {
+  const userId = await getAuthUserId();
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -165,10 +161,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid calendarId" }, { status: 400 });
   }
 
-  let accounts = await mergeAccountsFromDbAndSession(
-    (session as any).user.id as string,
-    session as any
-  );
+  let accounts = await getGoogleAccountsForUser(userId);
   let account = accounts.find((a) => a.accountId === accountId);
   if (!account) {
     return NextResponse.json({ error: "Account not found" }, { status: 404 });
@@ -217,8 +210,8 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!(session as any)?.user?.id) {
+  const userId = await getAuthUserId();
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   let body: any;
@@ -235,10 +228,7 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }
 
-  const accounts = await mergeAccountsFromDbAndSession(
-    (session as any).user.id as string,
-    session as any
-  );
+  const accounts = await getGoogleAccountsForUser(userId);
   const account = accounts.find((a) => a.accountId === accountId);
   if (!account) {
     return NextResponse.json({ error: "Account not found" }, { status: 404 });
@@ -264,8 +254,8 @@ export async function DELETE(req: Request) {
 }
 
 export async function PUT(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!(session as any)?.user?.id) {
+  const userId = await getAuthUserId();
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -310,10 +300,7 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "Invalid calendarId" }, { status: 400 });
   }
 
-  const accounts = await mergeAccountsFromDbAndSession(
-    (session as any).user.id as string,
-    session as any
-  );
+  const accounts = await getGoogleAccountsForUser(userId);
   const oldAccount = accounts.find((a) => a.accountId === oldAccountId);
   const newAccount = accounts.find((a) => a.accountId === newAccountId);
   if (!oldAccount) {

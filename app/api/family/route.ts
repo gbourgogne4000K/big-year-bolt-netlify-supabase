@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAuthUserId } from "@/lib/supabase/auth";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/family - List all families the user belongs to
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const userId = await getAuthUserId();
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const userId = session.user.id;
 
     // Get all families where the user is a member
     const familyMembers = await prisma.familyMember.findMany({
@@ -69,12 +66,11 @@ export async function GET(request: NextRequest) {
 // POST /api/family - Create a new family
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const userId = await getAuthUserId();
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = session.user.id;
     const body = await request.json();
     const { name } = body;
 
@@ -144,12 +140,11 @@ export async function POST(request: NextRequest) {
 // PUT /api/family - Update family name
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const userId = await getAuthUserId();
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = session.user.id;
     const body = await request.json();
     const { familyId, name } = body;
 
@@ -192,12 +187,11 @@ export async function PUT(request: NextRequest) {
 // DELETE /api/family - Delete a family (admin only)
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const userId = await getAuthUserId();
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = session.user.id;
     const { searchParams } = new URL(request.url);
     const familyId = searchParams.get("familyId");
 

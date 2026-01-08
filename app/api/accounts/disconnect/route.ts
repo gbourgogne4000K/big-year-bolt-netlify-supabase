@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAuthUserId } from "@/lib/supabase/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!(session as any)?.user?.id) {
+  const userId = await getAuthUserId();
+  if (!userId) {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
   try {
@@ -16,7 +15,7 @@ export async function POST(req: Request) {
     // Only delete if the account belongs to this user
     await prisma.account.deleteMany({
       where: {
-        userId: (session as any).user.id as string,
+        userId,
         provider: "google",
         providerAccountId: accountId,
       },

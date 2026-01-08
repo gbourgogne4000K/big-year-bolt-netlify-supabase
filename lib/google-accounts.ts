@@ -8,6 +8,14 @@ export type GoogleAccountRecord = {
   accessTokenExpires?: number; // ms epoch
 };
 
+/**
+ * Get fresh Google accounts for a user (Supabase-compatible version)
+ * This is the primary function to use with Supabase auth
+ */
+export async function getGoogleAccountsForUser(userId: string): Promise<GoogleAccountRecord[]> {
+  return getFreshGoogleAccountsForUser(userId);
+}
+
 export async function refreshGoogleAccessToken(refreshToken: string) {
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID!,

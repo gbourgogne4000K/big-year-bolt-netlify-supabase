@@ -1,21 +1,17 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { mergeAccountsFromDbAndSession, refreshGoogleAccessToken } from "@/lib/google-accounts";
+import { getAuthUserId } from "@/lib/supabase/auth";
+import { getGoogleAccountsForUser, refreshGoogleAccessToken } from "@/lib/google-accounts";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const debug = url.searchParams.get("debug") === "1";
-  const session = await getServerSession(authOptions);
-  if (!(session as any)?.user?.id) {
+  const userId = await getAuthUserId();
+  if (!userId) {
     return NextResponse.json({ calendars: [] }, { status: 200 });
   }
-  let accounts = await mergeAccountsFromDbAndSession(
-    (session as any).user.id as string,
-    session as any
-  );
+  let accounts = await getGoogleAccountsForUser(userId);
   if (accounts.length === 0) {
     return NextResponse.json({ calendars: [] }, { status: 200 });
   }

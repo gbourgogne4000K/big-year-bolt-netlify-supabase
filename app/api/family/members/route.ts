@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAuthUserId } from "@/lib/supabase/auth";
 import { prisma } from "@/lib/prisma";
 
 // DELETE /api/family/members - Remove a member from family or leave family
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const userId = await getAuthUserId();
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = session.user.id;
     const { searchParams } = new URL(request.url);
     const familyId = searchParams.get("familyId");
     const memberId = searchParams.get("memberId"); // The member to remove (can be self or another user)
@@ -109,12 +107,11 @@ export async function DELETE(request: NextRequest) {
 // PUT /api/family/members - Update member role
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const userId = await getAuthUserId();
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = session.user.id;
     const body = await request.json();
     const { familyId, memberId, role } = body;
 

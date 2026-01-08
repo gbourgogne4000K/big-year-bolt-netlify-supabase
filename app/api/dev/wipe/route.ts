@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAuthUserId } from "@/lib/supabase/auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -14,8 +13,7 @@ export async function POST(req: Request) {
   }
 
   // Require authentication for all wipe operations
-  const session = await getServerSession(authOptions);
-  const userId = (session as any)?.user?.id as string | undefined;
+  const userId = await getAuthUserId();
   if (!userId) {
     return NextResponse.json({ ok: false, error: "Not signed in" }, { status: 401 });
   }

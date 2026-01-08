@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAuthUserId } from "@/lib/supabase/auth";
 import { prisma } from "@/lib/prisma";
 import { refreshGoogleAccessToken } from "@/lib/google-accounts";
 
@@ -16,12 +15,11 @@ function endOfYearIso(year: number) {
 // GET /api/family/events - Get events from all family shared calendars
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const userId = await getAuthUserId();
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = session.user.id;
     const { searchParams } = new URL(request.url);
     const familyId = searchParams.get("familyId");
     const year = parseInt(
