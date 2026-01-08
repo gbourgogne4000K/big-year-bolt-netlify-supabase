@@ -2,6 +2,31 @@
 
 Full-screen yearly calendar that shows only all-day events from your Google Calendar. Built with Next.js (App Router), Tailwind CSS, and shadcn-style UI components.
 
+## Features
+
+### Personal Calendar View
+- **Multi-account support**: Connect multiple Google accounts and see all your calendars in one place
+- **Full-year visualization**: See all 365 days at a glance with all-day events displayed as colored bars
+- **Create/Edit/Delete events**: Manage your events directly from the calendar
+- **Custom colors**: Personalize calendar colors to your preference
+- **Hide events**: Temporarily hide events without deleting them
+
+### Family Sharing (NEW)
+Share calendars with your family and see everyone's events in a unified view:
+
+- **Create a family group**: Set up a family and invite members with a unique invite code
+- **Share calendars**: Each family member can choose which of their calendars to share with the family
+- **Aggregated family view**: Switch to the family view to see all shared calendars from all members
+- **Multi-family support**: Be part of multiple families (work team, family, friends group, etc.)
+- **Admin controls**: Family creators can manage members and delete the family
+
+#### How Family Sharing Works
+1. **Create a family**: Click on the Family settings icon in the sidebar, then "Create"
+2. **Invite members**: Share the invite code with family members (admins can see and copy the code)
+3. **Join a family**: Use the invite code to join an existing family
+4. **Share your calendars**: Select which of your Google calendars to share with the family
+5. **Switch views**: Toggle between "Personal" and "Family" views in the sidebar to see different calendar sets
+
 ## Quickstart
 
 1. Install dependencies:

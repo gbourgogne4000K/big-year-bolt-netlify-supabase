@@ -40,6 +40,7 @@ export async function GET() {
       alignWeekends: prefs.alignWeekends ?? false,
       showHidden: prefs.showHidden,
       calendarColors: JSON.parse(prefs.calendarColors),
+      activeFamilyId: prefs.activeFamilyId || null,
     });
   } catch (error: any) {
     console.error("Error fetching preferences:", error);
@@ -67,6 +68,7 @@ export async function PUT(req: NextRequest) {
       alignWeekends,
       showHidden,
       calendarColors,
+      activeFamilyId,
     } = body;
 
     const updateData: any = {};
@@ -87,6 +89,9 @@ export async function PUT(req: NextRequest) {
     }
     if (calendarColors !== undefined) {
       updateData.calendarColors = JSON.stringify(calendarColors);
+    }
+    if (activeFamilyId !== undefined) {
+      updateData.activeFamilyId = activeFamilyId;
     }
 
     const prefs = await prisma.userPreferences.upsert({
@@ -110,6 +115,7 @@ export async function PUT(req: NextRequest) {
       alignWeekends: prefs.alignWeekends ?? false,
       showHidden: prefs.showHidden,
       calendarColors: JSON.parse(prefs.calendarColors),
+      activeFamilyId: prefs.activeFamilyId || null,
     });
   } catch (error: any) {
     console.error("Error updating preferences:", error);

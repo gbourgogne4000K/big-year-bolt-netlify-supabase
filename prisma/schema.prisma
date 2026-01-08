@@ -9,14 +9,16 @@ datasource db {
 
 // NextAuth standard schema
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  preferences   UserPreferences?
+  id              String    @id @default(cuid())
+  name            String?
+  email           String?   @unique
+  emailVerified   DateTime?
+  image           String?
+  accounts        Account[]
+  sessions        Session[]
+  preferences     UserPreferences?
+  familyMembers   FamilyMember[]     // Families the user belongs to
+  sharedCalendars FamilyCalendar[]   // Calendars shared by this user
 }
 
 model Account {
@@ -55,16 +57,57 @@ model VerificationToken {
 }
 
 model UserPreferences {
-  id                String   @id @default(cuid())
-  userId            String   @unique
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  selectedCalendarIds String  @default("[]") // JSON array
-  hiddenEventIds     String   @default("[]") // JSON array
-  showDaysOfWeek    Boolean  @default(true)
-  alignWeekends     Boolean  @default(false)
-  showHidden         Boolean  @default(false)
-  calendarColors    String   @default("{}") // JSON object
-  updatedAt          DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  selectedCalendarIds String   @default("[]") // JSON array
+  hiddenEventIds      String   @default("[]") // JSON array
+  showDaysOfWeek      Boolean  @default(true)
+  alignWeekends       Boolean  @default(false)
+  showHidden          Boolean  @default(false)
+  calendarColors      String   @default("{}") // JSON object
+  activeFamilyId      String?  // Currently active family view (null = personal view)
+  updatedAt           DateTime @updatedAt
 }
 
+// Family group model
+model Family {
+  id          String   @id @default(cuid())
+  name        String
+  inviteCode  String   @unique @default(cuid()) // Unique code to join the family
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
+  members     FamilyMember[]
+  calendars   FamilyCalendar[]
+}
+
+// Family membership (links users to families)
+model FamilyMember {
+  id        String   @id @default(cuid())
+  familyId  String
+  userId    String
+  role      String   @default("member") // "admin" or "member"
+  joinedAt  DateTime @default(now())
+
+  family    Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([familyId, userId]) // A user can only be a member once per family
+}
+
+// Calendars shared with the family by members
+model FamilyCalendar {
+  id              String   @id @default(cuid())
+  familyId        String
+  sharedByUserId  String   // The user who shared this calendar
+  calendarId      String   // The composite calendarId (accountId|googleCalendarId)
+  displayName     String?  // Optional custom display name
+  color           String?  // Optional custom color for family view
+  createdAt       DateTime @default(now())
+
+  family          Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  sharedBy        User     @relation(fields: [sharedByUserId], references: [id], onDelete: Cascade)
+
+  @@unique([familyId, calendarId]) // A calendar can only be shared once per family
+}
